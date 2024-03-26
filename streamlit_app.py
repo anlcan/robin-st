@@ -34,12 +34,10 @@ def get_summary(target_url):
     return summary
 
 
-col1, col2 = st.columns(2)
 
 # Get OpenAI API key, Serper API key, number of results, and search query
 with st.sidebar:
-    # openai_api_key = st.text_input("OpenAI API Key", value="", type="password")
-
+    openai_api_key = st.text_input("OpenAI API Key", value="", type="password")
     st.caption("*Search & Summarize: Uses Serper & OpenAI APIs, summarizes each search result.*")
     url = st.text_input("URL", value="https://johnjago.com/great-docs/?utm_source=tldrnewsletter")
     # If 'Search & Summarize' button is clicked
@@ -51,7 +49,7 @@ with st.sidebar:
             try:
                 with st.spinner("Please wait..."):
                     summary = get_summary(url)
-                    col1.write(summary)
+                    st.write(summary)
 
             except Exception as e:
                 st.exception(f"Exception: {e}")
