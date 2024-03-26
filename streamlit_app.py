@@ -3,7 +3,8 @@ import requests
 from base64 import b64encode as encode
 import os
 
-HOST = os.getenv("robin-host", "http://localhost:8000")
+#HOST = os.getenv("robin-host", "http://localhost:8000")
+HOST = "https://robin-st-render.onrender.com"
 
 # Streamlit app
 st.header('Translated Text')

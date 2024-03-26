@@ -16,7 +16,8 @@ app = FastAPI()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "Write a summary of the following in 200-250 words in B2 German level break it into :"),
+    ("system", "Write a summary of the following in 200-250 words in B2 German level break it into"),
+    ("system", "the output text will be rendered in html so wrap the paragraps in <p> tags"),
     ("user", "{text}")
 ])
 chain = prompt | llm | StrOutputParser()

@@ -1,0 +1,20 @@
+# Ignore the vn directory
+evn/
+.env
+streamlit_app.py
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore .git directory
+.git/
+
+# Ignore log files
+*.log
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
