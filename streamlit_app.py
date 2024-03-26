@@ -1,60 +1,73 @@
 import streamlit as st
+import requests
+from base64 import b64encode as encode
+import os
 
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-
-import trafilatura
+HOST = os.getenv("robin-host", "http://localhost:8000")
 
 # Streamlit app
-st.subheader('Last Week In...')
+st.header('Translated Text')
+target_url = st.sidebar.text_input("URL", placeholder="Enter URL")
+st.sidebar.button("Search & Summarize")
 
+st.markdown("""
+    <script>
+        function doubleClickAction() {
+            let textField = document.getElementById('myTextField');
+            let selectedText = "";
+            if (typeof window.getSelection != "undefined") {
+                selectedText = window.getSelection().toString();
+            } else if (typeof document.selection != "undefined" && document.selection.type == "Text") {
+                selectedText = document.selection.createRange().text;
+            }
+            if (selectedText) {
+                alert("You double-clicked on: " + selectedText);
+            }
+        }
+    </script>
 
-def get_summary(target_url):
-    # loader = UnstructuredURLLoader(urls=[target_url], ssl_verify=False, headers={
-    #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"})
-    # data = loader.load()
-    downloaded = trafilatura.fetch_url(target_url)
-    main_text = trafilatura.extract(downloaded)
-    print(main_text)
-    # Initialize the ChatOpenAI module, load and run the summarize chain
-    llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
-    # prompt_template = """Write a summary of the following in 100-150 words in B2 German level:
-    #
-    #             {text}
-    #
-    #         """
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Write a summary of the following in 200-250 words in B2 German levelm break it into :"),
-        ("user", "{text}")
-    ])
+   <style>
+   button[kind="primary"] {{
+       background: none!important;
+       border: none;
+       padding: 0!important;
+       color: white !important;
+       text-decoration: none;
+       cursor: pointer;
+       border: none !important;
+   }}
+   button[kind="primary"]:hover {{
+       text-decoration: none;
+       color: yellow !important;
+   }}
+   button[kind="primary"]:focus {{
+       outline: none !important;
+       box-shadow: none !important;
+       color: blue !important;
+   }}
+   </style>
+   """,
+            unsafe_allow_html=True
+            )
+with st.spinner("Loading top headlines..."):
+    with requests.get(f"{HOST}/top-headlines") as response:
+        data = response.json()
+        for article in data:
+            if article["title"] != "[Removed]" or article["url"] != "https://removed.com":
+                if st.sidebar.button(article["title"], key=article["url"]):
+                    target_url = article["url"]
 
-    chain = prompt | llm | StrOutputParser()
-    summary = chain.invoke({"text": main_text})
-    return summary
+if target_url:
+    # if target_url.startswith("http://") or target_url.startswith("https://"):
+    #    target_url = target_url.replace("http://", "").replace("https://", "")
+    params = {"url": encode(target_url.encode())}
+    data = requests.get(f"{HOST}/texts/de/b2", params=params).json()
 
+    st.subheader(data["title"])
+    # st.write(data["text"], )
+    st.markdown(f"""<p id="myTextField" class="myTextField" onClick="alert()" ondblclick="doubleClickAction()">{data["text"]}</p>"""
+                ,unsafe_allow_html=True)
+    target_url = None
 
-
-# Get OpenAI API key, Serper API key, number of results, and search query
 with st.sidebar:
-    openai_api_key = st.text_input("OpenAI API Key", value="", type="password")
-    st.caption("*Search & Summarize: Uses Serper & OpenAI APIs, summarizes each search result.*")
-    url = st.text_input("URL", value="https://johnjago.com/great-docs/?utm_source=tldrnewsletter")
-    # If 'Search & Summarize' button is clicked
-    if st.button("Search & Summarize"):
-        # Validate inputs
-        if not openai_api_key.strip() or not url:
-            st.error(f"Please provide the missing fields.")
-        else:
-            try:
-                with st.spinner("Please wait..."):
-                    summary = get_summary(url)
-                    st.write(summary)
-
-            except Exception as e:
-                st.exception(f"Exception: {e}")
-# search_query = st.text_input("Search Query", label_visibility="collapsed")
-
-
-if __name__ == "__main__":
-    print(get_summary("https://johnjago.com/great-docs/?utm_source=tldrnewsletter"))
+    st.caption("")
