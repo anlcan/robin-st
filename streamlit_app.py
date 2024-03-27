@@ -4,8 +4,8 @@ from base64 import b64encode as encode
 from random import shuffle
 import os
 
-HOST = os.getenv("robin-host", "http://localhost:8000")
-# HOST = "https://robin-st-render.onrender.com"
+#HOST = os.getenv("robin-host", "http://localhost:8000")
+HOST = "https://robin-st-render.onrender.com"
 
 # Streamlit app
 st.header('Learn German acb, fuck yeah')
@@ -64,8 +64,6 @@ def answer_question():
 
 
 if 'topic' in st.session_state:
-    # if target_url.startswith("http://") or target_url.startswith("https://"):
-    #    target_url = target_url.replace("http://", "").replace("https://", "")
     topic = st.session_state['topic']
     st.subheader(f"Exercise on {topic}")
 
