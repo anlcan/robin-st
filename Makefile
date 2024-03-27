@@ -15,6 +15,7 @@ upreq:
 	pip install -r requirements.txt
 
 api:
+	#source evn/bin/activate
 	uvicorn server:app --reload
 
 st:

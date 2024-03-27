@@ -23,6 +23,32 @@ prompt = ChatPromptTemplate.from_messages([
 chain = prompt | llm | StrOutputParser()
 
 
+prompt_exercise = ChatPromptTemplate.from_messages([
+    ("system", """
+    You are an excellent German teacher, and you generate exercises for your students.
+    You always create exercises that are challenging and engaging for your students.
+    You create exercises that are tailored to the level of your students, which is {level} in this case. 
+    You keep the sentences challenging but understandable, use the vocabulary that is appropriate for the level.
+    you generate one sentence per exercise unless specified otherwise. 
+    The exercises are fill-in-the-blank exercises.
+    The text generated should be in German.
+    The text generated should be in the CSV format, where first colum is the exercise, the second colum is the correct answer, 
+    and add three columns with wrong answers. use | as the delimiter.
+    Mark the blank with dashes: ___
+    don't start with the column description
+    
+    Here is a bad example, becuase it is short and lacks context:
+    Ich ___ am Wochenende ins Kino. | gehe | gehen | geht | gegangen
+    
+    Here area a good example:
+    Unser Lehrer erklärt die Grammatik ___ , damit wir sie besser verstehen können |"geduldig" | "schnell" |"laut" |"aufgeregt"
+
+    
+    """),
+    ("user", "create an exercise on the following topic: {text}")
+])
+chain_exercise = prompt_exercise | llm | StrOutputParser()
+
 newsapi = NewsApiClient(os.getenv("NEWS_API_KEY"))
 
 @app.get("/texts/{lang}/{level}")
@@ -52,3 +78,9 @@ def read_top_headlines():
 @app.get("/news/{category}")
 def read_news():
     return {"news": "news"}
+
+@app.get("/exercises/{lang}/{level}")
+def exercises(lang: str = "de" ,level:str = "B2", topic: str = None):
+    summary = chain_exercise.invoke({"text": topic, "level": level})
+    data = summary.split("|")
+    return {"question":data[0], "answers": data[1:]}
