@@ -64,6 +64,7 @@ def get_prompt_exercise_chain(openai_api_key=OPENAI_API_KEY):
     return get_chain(prompt_exercise, openai_api_key)
 
 
-def get_chain(prompt):
+def get_chain(prompt, openai_api_key=OPENAI_API_KEY):
+    llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
     llm = ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
     return prompt | llm | StrOutputParser()
