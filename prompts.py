@@ -57,11 +57,11 @@ prompt_exercise = ChatPromptTemplate.from_messages(
 
 
 def get_prompt_chain(openai_api_key=OPENAI_API_KEY):
-    return get_chain(prompt)
+    return get_chain(prompt, openai_api_key)
 
 
 def get_prompt_exercise_chain(openai_api_key=OPENAI_API_KEY):
-    return get_chain(prompt_exercise)
+    return get_chain(prompt_exercise, openai_api_key)
 
 
 def get_chain(prompt):
