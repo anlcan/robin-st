@@ -16,6 +16,8 @@ from prompts import get_prompt_chain, get_prompt_exercise_chain
 class SessionInfo(BaseModel):
     user_id: str
     username: str
+    chain: Optional[Any] = None
+    chain_exercise: Optional[Any] = None
     # Add other fields as needed
 
 
@@ -49,7 +51,9 @@ def read_item(
 
     # Initialize the ChatOpenAI module, load and run the summarize chain
 
-    chain = get_prompt_chain()
+    if not session.chain:
+        session.chain = get_prompt_chain()
+    summary = session.chain.invoke({"text": main_text})
     summary = chain.invoke({"text": main_text})
 
     return {"text": summary, "title": title}
@@ -77,7 +81,9 @@ def exercises(
     topic: str = None,
     session: SessionInfo = Depends(get_session),
 ):
-    chain_exercise = get_prompt_exercise_chain()
+    if not session.chain_exercise:
+        session.chain_exercise = get_prompt_exercise_chain()
+    summary = session.chain_exercise.invoke({"text": topic, "level": level})
     summary = chain_exercise.invoke({"text": topic, "level": level})
     data = summary.split("|")
     return {"question": data[0], "answers": data[1:]}
