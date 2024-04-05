@@ -9,23 +9,18 @@ from fastapi import FastAPI
 from fastapi_sessions.backends.implementations import InMemoryBackend
 from fastapi_sessions.frontends.implementations import SessionCookie
 from newsapi import NewsApiClient
-
-app = FastAPI()
 from prompts import get_prompt_chain, get_prompt_exercise_chain
+
+from pydantic import BaseModel
+
+class SessionInfo(BaseModel):
+    user_id: str
+    username: str
+    # Add other fields as needed
 
 SESSION_SECRET_KEY = "a_very_secret_key_change_me"
 session_backend = InMemoryBackend[SessionInfo]()
 session_cookie = SessionCookie[SessionInfo](secret_key=SESSION_SECRET_KEY, backend=session_backend, lifetime=timedelta(hours=1))
-
-
-newsapi = NewsApiClient(os.getenv("NEWS_API_KEY"))
-
-@app.middleware("http")
-async def add_session_middleware(request: requests.Request, call_next):
-    response = await call_next(request)
-    await session_cookie.attach_to_response(request, response)
-    return response
-
 def get_session(session_info: SessionInfo = Depends(session_cookie.verify_session)):
     return session_info
 
