@@ -83,6 +83,7 @@ def read_item(lang: str = "de", level: str = "b2", url: str = None, session: Ses
 
     # Initialize the ChatOpenAI module, load and run the summarize chain
 
+    chain = get_prompt_chain()
     summary = chain.invoke({"text": main_text})
 
     return {"text": summary, "title": title}
@@ -105,6 +106,7 @@ def read_news():
 
 @app.get("/exercises/{lang}/{level}")
 def exercises(lang: str = "de", level: str = "B2", topic: str = None, session: SessionInfo = Depends(get_session)):
+    chain_exercise = get_prompt_exercise_chain()
     summary = chain_exercise.invoke({"text": topic, "level": level})
     data = summary.split("|")
     return {"question": data[0], "answers": data[1:]}
