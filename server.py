@@ -8,7 +8,7 @@ from fastapi import Depends, FastAPI
 from fastapi_sessions.backends.implementations import InMemoryBackend
 from fastapi_sessions.frontends.implementations import SessionCookie
 from newsapi import NewsApiClient
-from pydantic import BaseModel
+from pydantic import Any, BaseModel, Optional
 
 from prompts import get_prompt_chain, get_prompt_exercise_chain
 
@@ -22,6 +22,7 @@ class SessionInfo(BaseModel):
 
 
 SESSION_SECRET_KEY = "a_very_secret_key_change_me"
+
 session_backend = InMemoryBackend[SessionInfo]()
 session_cookie = SessionCookie[SessionInfo](
     secret_key=SESSION_SECRET_KEY, backend=session_backend, lifetime=timedelta(hours=1)
@@ -54,7 +55,6 @@ def read_item(
     if not session.chain:
         session.chain = get_prompt_chain()
     summary = session.chain.invoke({"text": main_text})
-    summary = chain.invoke({"text": main_text})
 
     return {"text": summary, "title": title}
 
@@ -84,6 +84,6 @@ def exercises(
     if not session.chain_exercise:
         session.chain_exercise = get_prompt_exercise_chain()
     summary = session.chain_exercise.invoke({"text": topic, "level": level})
-    summary = chain_exercise.invoke({"text": topic, "level": level})
+
     data = summary.split("|")
     return {"question": data[0], "answers": data[1:]}

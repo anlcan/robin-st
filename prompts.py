@@ -1,15 +1,27 @@
+import os
+
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "Write a summary of the following in 200-250 words in B2 German level break it into"),
-    ("system", "the output text will be rendered in html so wrap the paragraps in <p> tags"),
-    ("user", "{text}")
-])
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-prompt_exercise = ChatPromptTemplate.from_messages([
-    ("system", """
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "Write a summary of the following in 200-250 words in B2 German level break it into",
+        ),
+        ("system", "the output text will be rendered in html so wrap the paragraps in <p> tags"),
+        ("user", "{text}"),
+    ]
+)
+
+prompt_exercise = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
     You are an excellent German teacher, and you generate exercises for your students.
     You always create exercises that are challenging and engaging for your students.
     You create exercises that are tailored to the level of your students, which is {level} in this case. 
@@ -29,15 +41,18 @@ prompt_exercise = ChatPromptTemplate.from_messages([
     Unser Lehrer erklärt die Grammatik ___ , damit wir sie besser verstehen können |"geduldig" | "schnell" |"laut" |"aufgeregt"
 
 
-    """),
-    ("user", "create an exercise on the following topic: {text}")
-])
+    """,
+        ),
+        ("user", "create an exercise on the following topic: {text}"),
+    ]
+)
 
-def get_prompt_chain(openai_api_key):
+
+def get_prompt_chain(openai_api_key=OPENAI_API_KEY):
     llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
     return prompt | llm | StrOutputParser()
 
-def get_prompt_exercise_chain(openai_api_key):
+
+def get_prompt_exercise_chain(openai_api_key=OPENAI_API_KEY):
     llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
     return prompt_exercise | llm | StrOutputParser()
-
