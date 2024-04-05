@@ -5,8 +5,8 @@ from random import shuffle
 import requests
 import streamlit as st
 
-# HOST = os.getenv("robin-host", "http://localhost:8000")
-HOST = "https://robin-st-render.onrender.com"
+HOST = os.getenv("robin-host", "http://localhost:8000")
+# HOST = "https://robin-st-render.onrender.com"
 
 # Streamlit app
 st.header("Learn German acb, fuck yeah")

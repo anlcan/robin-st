@@ -20,3 +20,6 @@ api:
 
 st:
 	streamlit run streamlit_app.py
+
+id:
+	pre-commit run --all-files

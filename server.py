@@ -1,46 +1,20 @@
 import os
 from base64 import b64decode
-from datetime import timedelta
-from typing import Any, Optional
-from uuid import UUID
-from requests import Request, get
+from typing import Any
+
 import trafilatura
 from fastapi import Depends, FastAPI
 from fastapi_sessions.backends.implementations import InMemoryBackend
-from fastapi_sessions.frontends.implementations import SessionCookie, CookieParameters
+from fastapi_sessions.frontends.implementations import CookieParameters, SessionCookie
 from newsapi import NewsApiClient
 from pydantic import BaseModel
+from requests import Request, get
 
 from prompts import get_prompt_chain, get_prompt_exercise_chain
-
-
-class SessionInfo(BaseModel):
-    user_id: str
-    username: str
-    chain: Optional[Any] = None
-    chain_exercise: Optional[Any] = None
-    # Add other fields as needed
-
-
-SESSION_SECRET_KEY = "a_very_secret_key_change_me"
-
-session_backend = InMemoryBackend[UUID,SessionInfo]()
-session_cookie = SessionCookie(
-    cookie_name="cookie",
-    identifier="general_verifier",
-    auto_error=True,
-    secret_key="DONOTUSE",
-    cookie_params=CookieParameters()
-)
-
-
-def get_session(session_info: SessionInfo):
-    return session_info
-
-
-
+from session_handling import SessionData, verifier
 
 app = FastAPI()
+
 
 @app.middleware("http")
 async def log_middleware(request: Request, call_next):
@@ -54,7 +28,8 @@ async def log_middleware(request: Request, call_next):
 def read_item(
     lang: str = "de",
     level: str = "b2",
-    url: str = None
+    url: str = None,
+    session: SessionData = Depends(verifier),
 ):
     target_url = b64decode(url).decode()
     print(target_url)
@@ -66,8 +41,8 @@ def read_item(
 
     # Initialize the ChatOpenAI module, load and run the summarize chain
 
-    # if not session.chain:
-    #     session.chain = get_prompt_chain()
+    if not session.chain:
+        session.chain = get_prompt_chain()
     summary = session.chain.invoke({"text": main_text})
 
     return {"text": summary, "title": title}
@@ -93,7 +68,7 @@ def exercises(
     lang: str = "de",
     level: str = "B2",
     topic: str = None,
-    session: SessionInfo = Depends(get_session),
+    session: SessionData = Depends(verifier),
 ):
     if not session.chain_exercise:
         session.chain_exercise = get_prompt_exercise_chain()
