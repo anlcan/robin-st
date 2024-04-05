@@ -6,3 +6,4 @@ requests
 fastapi
 newsapi-python
 uvicorn
+fastapi_sessions
