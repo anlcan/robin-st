@@ -1,4 +1,10 @@
 import os
+from datetime import timedelta
+from fastapi import Depends
+from fastapi_sessions import SessionCookie, SessionInfo
+from fastapi_sessions.backends.implementations import InMemoryBackend
+from fastapi_sessions.frontends.implementations import SessionCookie, SessionInfo
+from fastapi_sessions.session_verifier import SessionVerifier
 
 import requests
 from fastapi import FastAPI
@@ -12,6 +18,14 @@ from base64 import b64decode as decode
 from newsapi import NewsApiClient
 
 app = FastAPI()
+
+SESSION_SECRET_KEY = "a_very_secret_key_change_me"
+session_backend = InMemoryBackend[SessionInfo]()
+session_cookie = SessionCookie(
+    secret_key=SESSION_SECRET_KEY,
+    session_backend=session_backend,
+    max_age=timedelta(hours=1)
+)
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
@@ -51,8 +65,17 @@ chain_exercise = prompt_exercise | llm | StrOutputParser()
 newsapi = NewsApiClient(os.getenv("NEWS_API_KEY"))
 
 
+@app.middleware("http")
+async def add_session_middleware(request: Request, call_next):
+    response = await call_next(request)
+    await session_cookie.attach_to_response(request, response)
+    return response
+
+def get_session(session_info: SessionInfo = Depends(session_cookie.verify_session)):
+    return session_info
+
 @app.get("/texts/{lang}/{level}")
-def read_item(lang: str = "de", level: str = "b2", url: str = None):
+def read_item(lang: str = "de", level: str = "b2", url: str = None, session: SessionInfo = Depends(get_session)):
     target_url = decode(url).decode()
     downloaded = trafilatura.fetch_url(target_url)
     main_text = trafilatura.extract(downloaded)
@@ -83,7 +106,7 @@ def read_news():
 
 
 @app.get("/exercises/{lang}/{level}")
-def exercises(lang: str = "de", level: str = "B2", topic: str = None):
+def exercises(lang: str = "de", level: str = "B2", topic: str = None, session: SessionInfo = Depends(get_session)):
     summary = chain_exercise.invoke({"text": topic, "level": level})
     data = summary.split("|")
     return {"question": data[0], "answers": data[1:]}
