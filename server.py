@@ -4,12 +4,14 @@ from fastapi import Depends
 from fastapi_sessions.backends.implementations import InMemoryBackend
 from fastapi_sessions.frontends.implementations import SessionCookie, SessionInfo
 
+from fastapi import FastAPI, Depends
+from prompts import get_prompt_chain, get_prompt_exercise_chain
 import requests
 from fastapi import FastAPI
-from prompts import get_prompt_chain, get_prompt_exercise_chain
 
 import trafilatura
 from base64 import b64decode as decode
+from newsapi import NewsApiClient
 
 from newsapi import NewsApiClient
 
