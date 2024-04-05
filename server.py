@@ -6,9 +6,7 @@ from fastapi_sessions.frontends.implementations import SessionCookie, SessionInf
 
 import requests
 from fastapi import FastAPI
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from prompts import get_prompt_chain, get_prompt_exercise_chain
 
 import trafilatura
 from base64 import b64decode as decode
