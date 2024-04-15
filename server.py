@@ -1,26 +1,50 @@
 import os
 from base64 import b64decode
-from typing import Any
+from logging import getLogger
 
 import trafilatura
 from fastapi import Depends, FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import PlainTextResponse
 from fastapi_sessions.backends.implementations import InMemoryBackend
 from fastapi_sessions.frontends.implementations import CookieParameters, SessionCookie
 from newsapi import NewsApiClient
-from pydantic import BaseModel
 from requests import Request, get
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from termcolor import colored
 
 from prompts import get_prompt_chain, get_prompt_exercise_chain
 from session_handling import SessionData, verifier
 
-app = FastAPI()
+logger = getLogger("uvicorn")
+app = FastAPI(debug=True)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return PlainTextResponse(str(exc), status_code=400)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request, exc):
+    logger.error(f"HTTP {exc.status_code}: {exc.detail}")
+    return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+
+
+@app.middleware("http")
+async def dump_headers_middleware(request: Request, call_next):
+    headers = dict(request.headers)
+    for key, value in headers.items():
+        print(colored(f"{key}:", "blue"), colored(f"{value}", "green"))
+
+    response = await call_next(request)
+    return response
 
 
 @app.middleware("http")
 async def log_middleware(request: Request, call_next):
-    print(f"Incoming request: {request.method} {request.url}")
     response = await call_next(request)
-    print(f"Outgoing response: {response.status_code}")
+
     return response
 
 
@@ -49,11 +73,12 @@ def read_item(
 
 
 @app.get("/top-headlines")
-def read_top_headlines():
+async def read_top_headlines():
     """https://newsapi.org/docs/client-libraries/python"""
     # result = newsapi.get_top_headlines()
     params = {"country": "us", "apiKey": os.getenv("NEWS_API_KEY")}
     result = get("https://newsapi.org/v2/top-headlines", params=params).json()
+    await verifier.create_session()
     print(result)
     return result["articles"]
 

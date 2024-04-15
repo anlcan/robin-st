@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import Any, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException
 from fastapi_sessions.backends.implementations import InMemoryBackend
@@ -10,8 +10,7 @@ from pydantic import BaseModel
 
 
 class SessionData(BaseModel):
-    user_id: str
-    username: str
+    user_id: str = uuid4()
     chain: Optional[Any] = None
     chain_exercise: Optional[Any] = None
     # Add other fields as needed
@@ -61,7 +60,15 @@ class BasicVerifier(SessionVerifier[UUID, SessionData]):
 
     def verify_session(self, model: SessionData) -> bool:
         """If the session exists, it is valid"""
+        print(f"verifying session {model.user_id}")
+        session_exists = self._backend.get(model.user_id)
         return True
+
+    async def create_session(self) -> SessionData:
+        """Create a new session"""
+        data = SessionData()
+        await self._backend.create(data.user_id, data)
+        return data
 
 
 verifier = BasicVerifier(
